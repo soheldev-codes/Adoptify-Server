@@ -88,6 +88,73 @@ async function run() {
     });
 
     // =========================
+    // ADD PET Dashbord verifyToken,
+    // =========================
+
+    app.post("/pets", async (req, res) => {
+      const petData = req.body;
+
+      const result = await petsCollection.insertOne({
+        ...petData,
+        adopted: false,
+        createdAt: new Date(),
+      });
+
+      res.send(result);
+    });
+
+    // =========================
+    // UPDATE PET Dashbord verifyToken,
+    // =========================
+
+    app.patch("/pets/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const updatedData = req.body;
+
+      const result = await petsCollection.updateOne(
+        {
+          _id: new ObjectId(id),
+        },
+        {
+          $set: updatedData,
+        },
+      );
+
+      res.send(result);
+    });
+
+    // =========================
+    // DELETE PET Dashbord verifyToken,
+    // =========================
+
+    app.delete("/pets/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const result = await petsCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+    // =========================
+    // MY LISTINGS Dashbord verifyToken,
+    // =========================
+
+    app.get("/my-listings/:email", async (req, res) => {
+      const { email } = req.params;
+
+      const result = await petsCollection
+        .find({
+          owner_email: email,
+        })
+        .toArray();
+
+      res.send(result);
+    });
+
+    // =========================
     // End
     // =========================
   } finally {
