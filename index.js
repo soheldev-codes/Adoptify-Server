@@ -243,6 +243,80 @@ async function run() {
     });
 
     // =========================
+    // APPROVE REQUEST verifyToken,
+    // =========================
+
+    app.patch("/approve/:requestId", async (req, res) => {
+      const { requestId } = req.params;
+
+      const request = await adoptionsCollection.findOne({
+        _id: new ObjectId(requestId),
+      });
+
+      if (!request) {
+        return res.status(404).send({
+          message: "Request not found",
+        });
+      }
+
+      // Approve selected request
+      await adoptionsCollection.updateOne(
+        {
+          _id: new ObjectId(requestId),
+        },
+        {
+          $set: {
+            status: "approved",
+          },
+        },
+      );
+
+      // Reject others
+      await adoptionsCollection.updateMany(
+        {
+          petId: request.petId,
+          _id: {
+            $ne: new ObjectId(requestId),
+          },
+        },
+        {
+          $set: {
+            status: "rejected",
+          },
+        },
+      );
+
+      // Mark adopted
+      await petsCollection.updateOne(
+        {
+          _id: new ObjectId(request.petId),
+        },
+        {
+          $set: {
+            adopted: true,
+          },
+        },
+      );
+
+      res.send({
+        message: "Approved Successfully",
+      });
+    });
+
+    // =========================
+    // CANCEL REQUEST
+    // =========================
+
+    app.delete("/requests/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const result = await adoptionsCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+    // =========================
     // End
     // =========================
   } finally {
