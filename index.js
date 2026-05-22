@@ -15,6 +15,11 @@ app.use(express.json());
 // MongoDB URI
 const uri = process.env.MONGODB_URI;
 
+// JWT JWKS
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+);
+
 // Mongo Client
 const client = new MongoClient(uri, {
   serverApi: {
@@ -23,6 +28,42 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+// Logger Middleware
+const logger = (req, res, next) => {
+  console.log(`${req.method} | ${req.url}`);
+  next();
+};
+
+// Verify Token Middleware
+const verifyToken = async (req, res, next) => {
+  try {
+    const authorization = req.headers.authorization;
+
+    // Bearer token
+    const token = authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).send({
+        message: "Unauthorized Access",
+      });
+    }
+
+    // Verify token
+    const { payload } = await jwtVerify(token, JWKS);
+
+    // Save user
+    req.user = payload;
+
+    next();
+  } catch (error) {
+    console.log(error);
+
+    return res.status(401).send({
+      message: "Unauthorized Access",
+    });
+  }
+};
 
 async function run() {
   try {
