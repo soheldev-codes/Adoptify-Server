@@ -155,6 +155,94 @@ async function run() {
     });
 
     // =========================
+    // ADOPTION REQUEST
+    // =========================
+
+    app.post("/adoptions/:petId", async (req, res) => {
+      const { petId } = req.params;
+
+      const adoptionData = req.body;
+      console.log(adoptionData);
+
+      const pet = await petsCollection.findOne({
+        _id: new ObjectId(petId),
+      });
+
+      // Pet not found
+      if (!pet) {
+        return res.status(404).send({
+          message: "Pet not found",
+        });
+      }
+
+      // Owner cannot adopt own pet
+      if (pet.owner_email === adoptionData.user_email) {
+        return res.status(400).send({
+          message: "Owner cannot adopt own pet",
+        });
+      }
+
+      // // Already adopted
+      // if (pet.adopted) {
+      //   return res.status(400).send({
+      //     message: "Already adopted",
+      //   });
+      // }
+
+      const existingRequest = await adoptionsCollection.findOne({
+        petId,
+        user_email: adoptionData.user_email,
+      });
+
+      // Already requested
+      if (existingRequest) {
+        return res.status(400).send({
+          message: "Already requested",
+        });
+      }
+
+      const result = await adoptionsCollection.insertOne({
+        ...adoptionData,
+        petId,
+        status: "pending",
+        requestedAt: new Date(),
+      });
+
+      res.send(result);
+    });
+
+    // =========================
+    // MY REQUESTS
+    // =========================
+
+    app.get("/my-requests/:email", async (req, res) => {
+      const { email } = req.params;
+      console.log(email);
+
+      const result = await adoptionsCollection
+        .find({ user_email: email })
+        .toArray();
+
+      res.send(result);
+    });
+
+    // =========================
+    // REQUESTS FOR A PET verifyToken,
+    // =========================
+
+    app.get("/requests/:petId", async (req, res) => {
+      const { petId } = req.params;
+
+      const result = await adoptionsCollection
+        .find({
+          petId,
+        })
+        .toArray();
+
+      res.send(result);
+    });
+
+    // =========================
     // End
     // =========================
   } finally {
