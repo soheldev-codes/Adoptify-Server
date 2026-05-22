@@ -35,7 +35,7 @@ async function run() {
     const adoptionsCollection = db.collection("adoptions");
 
     // =========================
-    // GET ALL PETS
+    // GET ALL PETS page
     // =========================
 
     app.get("/pets", logger, async (req, res) => {
@@ -64,7 +64,21 @@ async function run() {
     });
 
     // =========================
-    // FEATURED PETS
+    // GET SINGLE PET  Page
+    // =========================
+
+    app.get("/pets/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const result = await petsCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+    // =========================
+    // FEATURED PETS Home Page
     // =========================
 
     app.get("/featured-pets", async (req, res) => {
